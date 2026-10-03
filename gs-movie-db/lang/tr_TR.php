@@ -1,0 +1,67 @@
+﻿<?php
+/**
+ * Movie Database Manager - Turkish Language File
+ * Location: /plugins/gs-movie-db/lang/tr_TR.php
+ */
+
+$i18n = array(
+
+	'PLUGIN_TITLE'     => 'Film Veritabanı Yöneticisi',
+	'PLUGIN_DESC'      => 'Film kataloğunuzu, puanlarınızı, fragmanlarınızı ve ön yüz ayarlarınızı yönetin.',
+	'CATALOGUE'        => 'Katalog',
+	'ADD_NEW_MOVIE'    => 'Yeni Film Ekle',
+	'SETTINGS'         => 'Ayarlar',
+	'CONFIGURATION'    => 'Eklenti Yapılandırması',
+	'EDIT_MOVIE'       => 'Filmi Düzenle',
+	'MOVIE_TITLE'      => 'Film Adı',
+	'URL_SLUG'         => 'URL Kısa Adı',
+	'URL_SLUG_'        => 'URL Kısa Adı Öneki:',
+	'YOUR_MOVIE'       => 'Filmlerinize şu adresten erişilebilir:',
+	'MOVIES_PER_PAGE'  => 'Sayfa Başına Film Sayısı (Ön Yüz Sayfalandırması):',
+	'FALLBACK_URL'     => 'Varsayılan Yedek Afiş URL’si:',
+	'SYNOPSIS'         => 'Film Özeti / Genel Bakış',
+	'SYNOPSIS_'        => 'Film Özeti',
+	'RELEASE_YEAR'     => 'Yayın Yılı',
+	'RUNTIME'          => 'Süre (Dakika)',
+	'RUNTIME_'         => 'Dakika',
+	'RATING'           => 'Puan (0-10)',
+	'GENRES'           => 'Türler (Virgülle Ayırın)',
+	'DIRECTOR'         => 'Yönetmen',
+	'CAST'             => 'Başlıca Oyuncular (Virgülle Ayırın)',
+	'CAST_'            => 'Oyuncular',
+	'POSTER_URL'       => 'Afiş Görseli URL’si',
+	'BACKDROP_URL'     => 'Arka Plan Görseli URL’si',
+	'TRAILER_URL'      => 'YouTube Fragman Video Kimliği / Bağlantısı',
+	'SAVE_MOVIE'       => 'Filmi Kaydet',
+	'UPDATE_MOVIE'     => 'Filmi Güncelle',
+	'SAVE_SETTINGS'    => 'Ayarları Kaydet',
+	'CANCEL'           => 'İptal',
+	'DELETE'           => 'Sil',
+	'POSTER'           => 'Afiş',
+	'MOVIE_T_SLUG'     => 'Film Adı ve URL Kısa Adı',
+	'YEAR'             => 'Yıl',
+	'GENRES_'          => 'Türler',
+	'RATING_'          => 'Puan',
+	'ACTIONS'          => 'İşlemler',
+	'NO_MOVIE_ADDED'   => 'Henüz film eklenmedi.',
+	'ADD_FIRST_MOVIE'  => 'İlk Filminizi Ekleyin',
+	'NEXT'             => 'Sonraki',
+	'PREV'             => 'Önceki',
+	'BACK_TO_CATALOG'  => 'Kataloğa Geri Dön',
+	'SELECTED'         => 'seçildi',
+	'EDIT'             => 'Düzenle',
+	'PER_PAGE'         => 'Sayfa Başına:',
+	'SHOWING'          => 'Gösterilen',
+	'OF'               => '/',
+	'MOVIES'           => 'film',
+	'MSG_SAVED'        => 'Film başarıyla kaydedildi!',
+	'MSG_SETTINGS'     => 'Eklenti ayarları kaydedildi.',
+	'MSG_DELETED'      => 'Film veritabanından kaldırıldı.',
+	'CONFIRM_DELETE'   => 'Bu filmi silmek istediğinizden emin misiniz?',
+	'MOVIE_NOT_FOUND'  => 'Film Bulunamadı',
+	'MOVIE_NOT_FOUND_' => 'İstenen film bulunamadı.'
+
+
+);
+
+?>
