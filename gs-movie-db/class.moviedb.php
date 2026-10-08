@@ -46,19 +46,20 @@ class MovieDB {
         if ($xml) {
             foreach ($xml->movie as $m) {
                 $movies[] = array(
-                    'id'       => (string)$m->id,
-                    'title'    => (string)$m->title,
-                    'slug'     => (string)$m->slug,
+                    'id' => (string)$m->id,
+                    'title' => (string)$m->title,
+                    'slug' => (string)$m->slug,
                     'synopsis' => (string)$m->synopsis,
-                    'year'     => (string)$m->year,
-                    'runtime'  => (string)$m->runtime,
-                    'rating'   => (string)$m->rating,
-                    'genres'   => (string)$m->genres,
+                    'year' => (string)$m->year,
+                    'runtime' => (string)$m->runtime,
+                    'rating' => (string)$m->rating,
+                    'genres' => (string)$m->genres,
                     'director' => (string)$m->director,
-                    'cast'     => (string)$m->cast,
-                    'poster'   => (string)$m->poster,
+                    'cast' => (string)$m->cast,
+                    'poster' => (string)$m->poster,
                     'backdrop' => (string)$m->backdrop,
-                    'trailer'  => (string)$m->trailer                   
+                    'trailer' => (string)$m->trailer,
+                    'imdb' => (string)$m->imdb 
                 );
             }
         }
@@ -86,6 +87,85 @@ class MovieDB {
             }
         }
         return null;
+    }
+
+    /**
+     * Admin search movies by Title, Director, or Cast.
+     *
+     * @param string $query Search query string
+     * @param int $minLength Minimum characters required
+     * @return array List of matching movie records
+     */
+    public static function searchMoviesByTitle($query, $minLength = 2) {
+        $query = trim(mb_strtolower($query, 'UTF-8'));
+
+        if (empty($query) || mb_strlen($query, 'UTF-8') < $minLength) {
+            return array();
+        }
+
+        $allMovies = self::getMovies();
+        $results = array();
+
+        $quotedQuery = preg_quote($query, '/');
+        $pattern = '/\b' . $quotedQuery . '\b/iu';
+
+        foreach ($allMovies as $movie) {
+            $searchableFields = array(
+                isset($movie['title']) ? $movie['title'] : '',
+                isset($movie['director']) ? $movie['director'] : '',
+                isset($movie['cast']) ? (is_array($movie['cast']) ? implode(' ', $movie['cast']) : $movie['cast']) : '',
+                isset($movie['genres']) ? (is_array($movie['genres']) ? implode(' ', $movie['genres']) : $movie['genres']) : ''
+            );
+
+            $searchableText = implode(' ', $searchableFields);
+
+            if (preg_match($pattern, $searchableText)) {
+                $results[] = $movie;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Search movies by keyword across title, director, cast, genres, synopsis, and year
+     * Enforces minimum query length and word-boundary matching.
+     *
+     * @param string $query Search query string
+     * @param int $minLength Minimum characters required to execute search (default: 2)
+     * @return array List of matching movie records
+     */
+    public static function searchMovies($query, $minLength = 2) {
+        $query = trim(mb_strtolower($query, 'UTF-8'));
+
+        if (empty($query) || mb_strlen($query, 'UTF-8') < $minLength) {
+            return array();
+        }
+
+        $allMovies = self::getMovies();
+        $results = array();
+
+        $quotedQuery = preg_quote($query, '/');
+        $pattern = '/\b' . $quotedQuery . '\b/iu';
+
+        foreach ($allMovies as $movie) {
+            $searchableFields = array(
+                isset($movie['title']) ? $movie['title'] : '',
+                isset($movie['director']) ? $movie['director'] : '',
+                isset($movie['genres']) ? (is_array($movie['genres']) ? implode(' ', $movie['genres']) : $movie['genres']) : '',
+                isset($movie['cast']) ? (is_array($movie['cast']) ? implode(' ', $movie['cast']) : $movie['cast']) : '',
+                isset($movie['synopsis']) ? $movie['synopsis'] : '',
+                isset($movie['year']) ? (string)$movie['year'] : ''
+            );
+
+            $searchableText = implode(' ', $searchableFields);
+
+            if (preg_match($pattern, $searchableText)) {
+                $results[] = $movie;
+            }
+        }
+
+        return $results;
     }
 
     // Save (Insert or Update) a movie
@@ -118,18 +198,19 @@ class MovieDB {
             $movie->addChild('id', $id);
         }
 
-        $movie->title    = isset($data['title']) ? $data['title'] : '';
-        $movie->slug     = $slug;
+        $movie->title = isset($data['title']) ? $data['title'] : '';
+        $movie->slug = $slug;
         $movie->synopsis = isset($data['synopsis']) ? $data['synopsis'] : '';
-        $movie->year     = isset($data['year']) ? $data['year'] : '';
-        $movie->runtime  = isset($data['runtime']) ? $data['runtime'] : '';
-        $movie->rating   = isset($data['rating']) ? $data['rating'] : '';
-        $movie->genres   = isset($data['genres']) ? $data['genres'] : '';
+        $movie->year = isset($data['year']) ? $data['year'] : '';
+        $movie->runtime = isset($data['runtime']) ? $data['runtime'] : '';
+        $movie->rating = isset($data['rating']) ? $data['rating'] : '';
+        $movie->genres = isset($data['genres']) ? $data['genres'] : '';
         $movie->director = isset($data['director']) ? $data['director'] : '';
-        $movie->cast     = isset($data['cast']) ? $data['cast'] : '';
-        $movie->poster   = isset($data['poster']) ? $data['poster'] : '';
+        $movie->cast = isset($data['cast']) ? $data['cast'] : '';
+        $movie->poster = isset($data['poster']) ? $data['poster'] : '';
         $movie->backdrop = isset($data['backdrop']) ? $data['backdrop'] : '';
-        $movie->trailer  = isset($data['trailer']) ? $data['trailer'] : '';
+        $movie->trailer = isset($data['trailer']) ? $data['trailer'] : '';
+        $movie->imdb = isset($data['imdb']) ? $data['imdb'] : '';
 
         $xml->asXML($path);
     }
@@ -155,11 +236,11 @@ class MovieDB {
 
     // Load plugin settings safely
     public static function getSettings() {
-		global $SITEURL;
+        global $SITEURL;
         $path = self::getSettingsPath();
         $defaults = array(
-            'slug_prefix'    => 'movies',
-            'per_page'       => 12,
+            'slug_prefix' => 'movies',
+            'per_page' => 12,
             'default_poster' => $SITEURL .'plugins/gs-movie-db/img/placeholder.jpg'
         );
 
@@ -170,8 +251,8 @@ class MovieDB {
         $xml = @simplexml_load_file($path);
         if ($xml) {
             return array(
-				'slug_prefix'    => !empty($xml->slug_prefix) ? (string)$xml->slug_prefix : $defaults['slug_prefix'],
-                'per_page'       => !empty($xml->per_page) ? (int)$xml->per_page : $defaults['per_page'],
+                'slug_prefix' => !empty($xml->slug_prefix) ? (string)$xml->slug_prefix : $defaults['slug_prefix'],
+                'per_page' => !empty($xml->per_page) ? (int)$xml->per_page : $defaults['per_page'],
                 'default_poster' => !empty($xml->default_poster) ? (string)$xml->default_poster : $defaults['default_poster']
             );
         }
@@ -184,8 +265,8 @@ class MovieDB {
         $path = self::getSettingsPath();
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><settings></settings>');
         
-        $slug_prefix    = isset($data['slug_prefix']) ? $data['slug_prefix'] : 'movies';
-        $per_page       = isset($data['per_page']) ? intval($data['per_page']) : 12;
+        $slug_prefix = isset($data['slug_prefix']) ? $data['slug_prefix'] : 'movies';
+        $per_page = isset($data['per_page']) ? intval($data['per_page']) : 12;
         $default_poster = isset($data['default_poster']) ? $data['default_poster'] : '';
 
         $xml->addChild('slug_prefix', self::slugify($slug_prefix));
@@ -195,7 +276,59 @@ class MovieDB {
         $xml->asXML($path);
     }
 
-    // Helper: Initialize empty movies.xml
+    
+	/**
+		* Export movie catalogue to CSV download
+	*/
+	public static function exportCsvCatalogue() {
+		$movies = self::getMovies();
+		$filename = 'movie_catalogue_' . date('Y-m-d') . '.csv';
+
+		if (ob_get_level()) {
+			ob_end_clean();
+	}
+
+			header('Content-Type: text/csv; charset=utf-8');
+			header('Content-Disposition: attachment; filename="' . $filename . '"');
+			header('Pragma: no-cache');
+			header('Expires: 0');
+
+			$output = fopen('php://output', 'w');
+
+	// Write UTF-8 BOM for Microsoft Excel compatibility
+	fprintf($output, "\xEF\xBB\xBF");
+
+	// Required Header Columns
+	fputcsv($output, array(
+			'Movie Title',
+			'Director',
+			'Cast',
+			'Synopsis',
+			'Release Year',
+			'Runtime Min.',
+			'Genres',
+			'Imdb url'
+	), ',', '"', '\\');
+
+	// Export Data Rows
+	foreach ($movies as $m) {
+	fputcsv($output, array(
+	isset($m['title']) ? $m['title'] : '',
+	isset($m['director']) ? $m['director'] : '',
+	isset($m['cast']) ? $m['cast'] : '',
+	isset($m['synopsis']) ? $m['synopsis'] : '',
+	isset($m['year']) ? $m['year'] : '',
+	isset($m['runtime']) ? $m['runtime'] : '',
+	isset($m['genres']) ? $m['genres'] : '',
+	isset($m['imdb']) ? $m['imdb'] : ''
+		), ',', '"', '\\');
+	}
+
+	fclose($output);
+	exit;
+	}
+		
+	// Helper: Initialize empty movies.xml
     private static function initDefaultXml() {
         $path = self::getXmlPath();
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><movies></movies>');

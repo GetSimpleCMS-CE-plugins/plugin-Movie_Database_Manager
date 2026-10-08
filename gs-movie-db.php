@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Movie Database Manager
  * Description: Movie DB plugin for GetSimple CMS CE
- * Version: 1.0.0
+ * Version: 1.1
  * Author: Zeth
  */
 
@@ -13,7 +13,7 @@ $thisfile = basename(__FILE__);
 register_plugin(
     'gs-movie-db',
     'Movie Database Manager',
-    '1.0',
+    '1.1',
     'Zeth',
     'https://getsimple-ce.ovh/',
     'Manage catalogue, ratings, trailers, and movie pages.',
@@ -29,9 +29,20 @@ require_once(GSPLUGINPATH . 'gs-movie-db/class.moviedb.php');
 
 // 3. Register Admin Hooks
 add_action('plugins-sidebar', 'createSideMenu', array('gs-movie-db', 'Movie Database'));
+add_action('header', 'moviedb_export_csv_handler'); // Intercepts CSV export before template headers send output
+
 
 function moviedb_admin_main() {
     include(GSPLUGINPATH . 'gs-movie-db/admin.php');
+}
+
+/**
+ * Early-stage request handler for CSV export
+ */
+function moviedb_export_csv_handler() {
+ if (isset($_GET['id']) && $_GET['id'] === 'gs-movie-db' && isset($_GET['action']) && $_GET['action'] === 'export_csv') {
+ MovieDB::exportCsvCatalogue();
+ }
 }
 
 // 4. Register Frontend Shortcodes & URL Router
@@ -39,11 +50,17 @@ add_filter('content', 'moviedb_shortcode_filter');
 add_action('index-pretemplate', 'moviedb_url_router');
 
 function moviedb_shortcode_filter($content) {
+    require_once(GSPLUGINPATH . 'gs-movie-db/class.moviedb.php');
     require_once(GSPLUGINPATH . 'gs-movie-db/frontend.php');
 
     // Handle detail page injection
     if (isset($GLOBALS['MOVIEDB_CURRENT_SLUG'])) {
         return MovieDBFrontend::renderDetail($GLOBALS['MOVIEDB_CURRENT_SLUG']);
+    }
+
+    // Handle search bar & search results shortcode
+    if (strpos($content, '(% movie_db_search %)') !== false) {
+        $content = str_replace('(% movie_db_search %)', MovieDBFrontend::renderSearch(), $content);
     }
 
     // Handle shortcode grid
@@ -60,8 +77,10 @@ function moviedb_shortcode_filter($content) {
 function moviedb_url_router() {
     global $url, $title;
 
+    require_once(GSPLUGINPATH . 'gs-movie-db/class.moviedb.php');
+    
     $settings = MovieDB::getSettings();
-    $prefix   = trim($settings['slug_prefix'], '/');
+    $prefix = trim($settings['slug_prefix'], '/');
 
     // Handle standard query params or fancy rewrites
     $movie_slug = '';
@@ -99,9 +118,19 @@ function moviedb_url_router() {
 // ============================================================================
 
 /**
+ * Display search input bar and search results
+ */
+function get_movie_db_search() {
+    require_once(GSPLUGINPATH . 'gs-movie-db/class.moviedb.php');
+    require_once(GSPLUGINPATH . 'gs-movie-db/frontend.php');
+    echo MovieDBFrontend::renderSearch();
+}
+
+/**
  * Display main movie grid or detail page automatically
  */
 function get_movie_db_display() {
+    require_once(GSPLUGINPATH . 'gs-movie-db/class.moviedb.php');
     require_once(GSPLUGINPATH . 'gs-movie-db/frontend.php');
 
     // If viewing a single movie detail page
@@ -117,10 +146,7 @@ function get_movie_db_display() {
  * Direct shortcut for rendering the movie grid
  */
 function get_movie_db_grid() {
+    require_once(GSPLUGINPATH . 'gs-movie-db/class.moviedb.php');
     require_once(GSPLUGINPATH . 'gs-movie-db/frontend.php');
     echo MovieDBFrontend::renderGrid();
 }
-
-
-
-?>

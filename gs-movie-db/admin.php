@@ -11,10 +11,20 @@ function i18n_movie($key) {
     return i18n_r('gs-movie-db/' . $key);
 }
 
+
+$action = isset($_GET['action']) ? $_GET['action'] : 'list';
+
+// Handle CSV Export Action before any HTML is sent
+if ($action === 'export_csv') {
+ if (class_exists('MovieDB') && method_exists('MovieDB', 'exportCsvCatalogue')) {
+ MovieDB::exportCsvCatalogue();
+ }
+}
+
 // 1. Process Form Submissions & Actions
 $message = '';
-$action = isset($_GET['action']) ? $_GET['action'] : 'list';
 $edit_id = isset($_GET['edit']) ? $_GET['edit'] : '';
+$search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['save_movie'])) {
@@ -33,39 +43,89 @@ if ($action === 'delete' && !empty($_GET['id_movie'])) {
     $action = 'list';
 }
 
-// Data Loading & Admin Pagination logic ...
-$movies = MovieDB::getMovies();
+// Data Loading & Admin Pagination logic
+$all_movies = array_reverse(MovieDB::getMovies());
 $settings = MovieDB::getSettings();
 $movie_to_edit = ($action === 'edit' && !empty($edit_id)) ? MovieDB::getMovieById($edit_id) : null;
 
+// Handle Title Search Execution
+$searchResults = array();
+if (!empty($search_query)) {
+    $searchResults = MovieDB::searchMoviesByTitle($search_query);
+    
+    if (!empty($searchResults)) {
+        $found_ids = array_column($searchResults, 'id');
+        $remaining_movies = array_filter($all_movies, function($m) use ($found_ids) {
+            return !in_array($m['id'], $found_ids);
+        });
+        $movies = array_merge($searchResults, $remaining_movies);
+    } else {
+        $movies = $all_movies;
+    }
+} else {
+    $movies = $all_movies;
+}
+
 $per_page_admin = isset($_GET['per_page_admin']) ? max(1, intval($_GET['per_page_admin'])) : 10;
-$total_movies   = count($movies);
-$total_pages    = max(1, ceil($total_movies / $per_page_admin));
+$total_movies = count($movies);
+$total_pages = max(1, ceil($total_movies / $per_page_admin));
 
 $current_page = isset($_GET['p']) ? intval($_GET['p']) : 1;
 if ($current_page < 1) { $current_page = 1; }
 if ($current_page > $total_pages) { $current_page = $total_pages; }
 
-$offset           = ($current_page - 1) * $per_page_admin;
+$offset = ($current_page - 1) * $per_page_admin;
 $paginated_movies = array_slice($movies, $offset, $per_page_admin);
 
-function get_admin_url($page, $per_page) {
-    return 'load.php?id=gs-movie-db&action=list&p=' . $page . '&per_page_admin=' . $per_page;
+function get_admin_url($page, $per_page, $q = '') {
+    $url = 'load.php?id=gs-movie-db&action=list&p=' . intval($page) . '&per_page_admin=' . intval($per_page);
+    if (!empty($q)) {
+        $url .= '&q=' . urlencode($q);
+    }
+    return $url;
 }
 ?>
 
 <div class="movie-db-admin-wrap">
-    <h3><i class="fa fa-film"></i><?php echo i18n_movie('PLUGIN_TITLE'); ?></h3>
-    <p><?php echo i18n_movie('PLUGIN_DESC'); ?></p>
+    <h3><b><?php echo i18n_movie('PLUGIN_TITLE'); ?></b></h3>
+	<p><?php echo i18n_movie('PLUGIN_DESC'); ?></p>
 
     <?php echo $message; ?>
 
-    <!-- Sub-Navigation Toolbar -->
-    <div style="margin: 15px 0 25px 0;">
-        <a href="load.php?id=gs-movie-db&action=list" class="button <?php echo ($action === 'list') ? 'current' : ''; ?>"><?php echo i18n_movie('CATALOGUE'); ?> (<?php echo $total_movies; ?>)</a>
-        <a href="load.php?id=gs-movie-db&action=add" class="button <?php echo ($action === 'add') ? 'current' : ''; ?>">+ <?php echo i18n_movie('ADD_NEW_MOVIE'); ?></a>
-        <a href="load.php?id=gs-movie-db&action=settings" class="button <?php echo ($action === 'settings') ? 'current' : ''; ?>"><?php echo i18n_movie('SETTINGS'); ?></a>
+    <!-- Sub-Navigation Toolbar with Search Box placed right of Settings -->
+    <div style="margin: 15px 0 25px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <a href="load.php?id=gs-movie-db&action=list" class="button <?php echo ($action === 'list' && empty($search_query)) ? 'current' : ''; ?>"><?php echo i18n_movie('CATALOGUE'); ?> (<?php echo count($all_movies); ?>)</a>
+            <a href="load.php?id=gs-movie-db&action=add" class="button <?php echo ($action === 'add') ? 'current' : ''; ?>">+ <?php echo i18n_movie('ADD_NEW_MOVIE'); ?></a>
+			<a href="load.php?id=gs-movie-db&action=export_csv" class="button"><?php echo i18n_movie('EXPORT_CATALOGUE'); ?></a>
+            <a href="load.php?id=gs-movie-db&action=settings" class="button <?php echo ($action === 'settings') ? 'current' : ''; ?>"><?php echo i18n_movie('SETTINGS'); ?></a>
+			
+			<!-- Search Form -->
+            <form action="load.php" method="get" style="display: inline-flex; align-items: center; gap: 4px; margin-left: 10px;">
+                <input type="hidden" name="id" value="gs-movie-db" />
+                <input type="hidden" name="action" value="list" />
+                <input type="text" name="q" class="text" value="<?php echo htmlspecialchars($search_query); ?>" placeholder="<?php echo i18n_movie('SEARCH_FOR_T'); ?>" style="padding: 3px 8px; font-size: 12px; width: 180px; margin: 0;" />
+                <input type="submit" class="submit" value="<?php echo i18n_movie('SEARCH'); ?>" style="padding: 3px 10px; font-size: 12px; margin: 0; cursor: pointer;" />
+                <?php if (!empty($search_query)): ?>
+                    <a href="load.php?id=gs-movie-db&action=list" class="cancel" style="font-size: 12px; margin-left: 4px;"><?php echo i18n_movie('CLEAR'); ?></a>
+                <?php endif; ?>
+            </form>
+        </div>
     </div>
+
+    <?php if (!empty($search_query)): ?>
+        <div class="updated" style="margin-bottom: 15px;">
+            <p>
+                <?php echo i18n_movie('SEARCH_RESULT'); ?>: "<strong><?php echo htmlspecialchars($search_query); ?></strong>" 
+                (<?php echo i18n_movie('FOUND'); ?>: <strong><?php echo count($searchResults); ?></strong>)
+                <?php if (empty($searchResults)): ?>
+                    - <em><?php echo i18n_movie('NO_MOVIE_MATCH'); ?></em>
+                <?php else: ?>
+                    - <em><?php echo i18n_movie('MATCH_RESULT'); ?></em>
+                <?php endif; ?>
+            </p>
+        </div>
+    <?php endif; ?>
 
     <?php if ($action === 'settings'): ?>
         <!-- SETTINGS FORM -->
@@ -73,7 +133,7 @@ function get_admin_url($page, $per_page) {
             <h3><?php echo i18n_movie('CONFIGURATION'); ?></h3>
             
             <p>
-                <label for="slug_prefix"><?php echo i18n_movie('URL_SLUG_'); ?></label>
+                <label for="slug_prefix"><?php echo i18n_movie('URL_SLUG'); ?></label>
                 <input type="text" class="text" id="slug_prefix" name="slug_prefix" value="<?php echo htmlspecialchars($settings['slug_prefix']); ?>" style="width:100%; max-width:400px;">
                 <br><small><?php echo i18n_movie('YOUR_MOVIE'); ?> <code>/<?php echo htmlspecialchars($settings['slug_prefix']); ?>/movie-slug</code></small>
             </p>
@@ -97,7 +157,7 @@ function get_admin_url($page, $per_page) {
         <!-- ADD / EDIT MOVIE FORM -->
         <h3><?php echo ($action === 'edit') ? i18n_movie('EDIT_MOVIE') : i18n_movie('ADD_NEW_MOVIE'); ?></h3>
         
-        <form action="load.php?id=gs-movie-db" method="post">
+        <form action="load.php?id=gs-movie-db&action=<?php echo htmlspecialchars($action); ?>" method="post">
             <input type="hidden" name="id" value="<?php echo $movie_to_edit ? htmlspecialchars($movie_to_edit['id']) : uniqid('m_'); ?>">
 
             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
@@ -109,7 +169,7 @@ function get_admin_url($page, $per_page) {
                     </p>
 
                     <p>
-                        <label for="slug"><?php echo i18n_movie('URL_SLUG'); ?></label>
+                        <label for="slug"><?php echo i18n_movie('URL_SLUG'); ?>:</label>
                         <input type="text" class="text" id="slug" name="slug" value="<?php echo $movie_to_edit ? htmlspecialchars($movie_to_edit['slug']) : ''; ?>" style="width:100%;">
                     </p>
 
@@ -122,7 +182,7 @@ function get_admin_url($page, $per_page) {
                         <p style="flex:1;">
                             <label for="year"><?php echo i18n_movie('RELEASE_YEAR'); ?></label>
                             <input type="number" class="text" id="year" name="year" value="<?php echo $movie_to_edit ? htmlspecialchars($movie_to_edit['year']) : date('Y'); ?>" style="width:100%;">
-                        </p>                        
+                        </p> 
                         <p style="flex:1;">
                             <label for="runtime"><?php echo i18n_movie('RUNTIME'); ?></label>
                             <input type="number" class="text" id="runtime" name="runtime" value="<?php echo $movie_to_edit ? htmlspecialchars($movie_to_edit['runtime']) : '120'; ?>" style="width:100%;">
@@ -165,12 +225,16 @@ function get_admin_url($page, $per_page) {
                         <label for="trailer"><?php echo i18n_movie('TRAILER_URL'); ?></label>
                         <input type="text" class="text" id="trailer" name="trailer" placeholder="e.g. YoHD9XEinc0" value="<?php echo $movie_to_edit ? htmlspecialchars($movie_to_edit['trailer']) : ''; ?>" style="width:100%;">
                     </p>
+                    <p>
+                        <label for="imdb"><?php echo i18n_movie('IMDB_URL'); ?>:</label>
+                        <input type="text" class="text" id="imdb" name="imdb" placeholder="https://www.imdb.com/title/tt1234567/" value="<?php echo $movie_to_edit && isset($movie_to_edit['imdb']) ? htmlspecialchars($movie_to_edit['imdb']) : ''; ?>" style="width:100%;">
+                    </p>
                 </div>
             </div>
 
             <p style="margin-top:20px;">
                 <input type="submit" name="save_movie" class="submit" value="<?php echo ($action === 'edit') ? i18n_movie('UPDATE_MOVIE') : i18n_movie('SAVE_MOVIE'); ?>">
-                <a href="load.php?id=gs-movie-db" class="cancel" style="margin-left:10px;"><?php echo i18n_movie('CANCEL');?></a>
+                <a href="load.php?id=gs-movie-db" class="cancel" style="margin-left:10px;"><?php echo i18n_movie('CANCEL'); ?></a>
             </p>
         </form>
 
@@ -184,7 +248,7 @@ function get_admin_url($page, $per_page) {
                     <th style="width:70px;"><?php echo i18n_movie('YEAR'); ?></th>
                     <th style="width:140px;"><?php echo i18n_movie('GENRES_'); ?></th>
                     <th style="width:60px;"><?php echo i18n_movie('RATING_'); ?></th>
-                    <th style="width:120px; text-align:right;"><?php echo i18n_movie('ACTIONS'); ?></th>
+                    <th style="width:130px; text-align:right;"><?php echo i18n_movie('ACTIONS'); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -196,7 +260,10 @@ function get_admin_url($page, $per_page) {
                     </tr>
                 <?php else: ?>
                     <?php foreach ($paginated_movies as $m): ?>
-                        <tr>
+                        <?php 
+                        $is_matched = !empty($searchResults) && in_array($m['id'], array_column($searchResults, 'id'));
+                        ?>
+                        <tr style="<?php echo $is_matched ? 'background-color: #fff8e1;' : ''; ?>">
                             <td style="text-align:center; padding: 4px;">
                                 <?php if (!empty($m['poster'])): ?>
                                     <img src="<?php echo htmlspecialchars($m['poster']); ?>" alt="" style="width:36px; height:50px; object-fit:cover; border-radius:2px; display:block;">
@@ -206,6 +273,9 @@ function get_admin_url($page, $per_page) {
                             </td>
                             <td>
                                 <strong><a href="load.php?id=gs-movie-db&action=edit&edit=<?php echo urlencode($m['id']); ?>"><?php echo htmlspecialchars($m['title']); ?></a></strong>
+                                <?php if ($is_matched): ?>
+                                    <span style="background: red; color: #fff; font-size: 10px; padding: 5px 5px; border-radius: 3px; margin-left: 5px;"><?php echo i18n_movie('MATCHED'); ?></span>
+                                <?php endif; ?>
                                 <br><small style="color:#888;">/<?php echo htmlspecialchars($settings['slug_prefix']); ?>/<?php echo htmlspecialchars($m['slug']); ?></small>
                             </td>
                             <td><?php echo htmlspecialchars($m['year']); ?></td>
@@ -223,36 +293,71 @@ function get_admin_url($page, $per_page) {
 
         <!-- ADMIN PAGINATION CONTROLS -->
         <?php if ($total_movies > 0): ?>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; background: #f9f9f9; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px;">
-                <div style="font-size: 12px; color: #666;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 15px; background: #f9f9f9; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px;">
+                <div style="font-size: 12px; color: #666; white-space: nowrap;">
                     <?php echo i18n_movie('SHOWING'); ?> <strong><?php echo $offset + 1; ?></strong>&#x2012;<strong><?php echo min($offset + $per_page_admin, $total_movies); ?></strong> <?php echo i18n_movie('OF'); ?> <strong><?php echo $total_movies; ?></strong> <?php echo i18n_movie('MOVIES'); ?>
                 </div>
 
                 <?php if ($total_pages > 1): ?>
-                    <div style="display: flex; gap: 4px; align-items: center;">
+                    <div style="display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;">
                         <?php if ($current_page > 1): ?>
-                            <a href="<?php echo get_admin_url($current_page - 1, $per_page_admin); ?>" class="button" style="padding: 2px 8px; font-size: 12px;">&#171; <?php echo i18n_movie('PREV'); ?></a>
+                            <a href="<?php echo get_admin_url($current_page - 1, $per_page_admin, $search_query); ?>" class="button" style="padding: 2px 8px; font-size: 12px;">&#171; <?php echo i18n_movie('PREV'); ?></a>
                         <?php endif; ?>
 
-                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <?php if ($i == $current_page): ?>
-                                <span class="button current" style="padding: 2px 8px; font-size: 12px; font-weight: bold;"><?php echo $i; ?></span>
-                            <?php else: ?>
-                                <a href="<?php echo get_admin_url($i, $per_page_admin); ?>" class="button" style="padding: 2px 8px; font-size: 12px;"><?php echo $i; ?></a>
-                            <?php endif; ?>
-                        <?php endfor; ?>
+                        <?php
+                        $active_style = 'padding: 2px 8px; font-size: 12px; font-weight: bold; background: #ff2a4b !important; color: #ffffff !important; border-color: #ff2a4b !important; text-shadow: none !important;';
+
+                        // Truncated Pagination logic for Admin
+                        if ($total_pages <= 5) {
+                            for ($i = 1; $i <= $total_pages; $i++) {
+                                if ($i == $current_page) {
+                                    echo '<span class="button current-page-active" style="' . $active_style . '">' . $i . '</span>';
+                                } else {
+                                    echo '<a href="' . get_admin_url($i, $per_page_admin, $search_query) . '" class="button" style="padding: 2px 8px; font-size: 12px;">' . $i . '</a>';
+                                }
+                            }
+                        } else {
+                            if ($current_page <= 3) {
+                                for ($i = 1; $i <= 3; $i++) {
+                                    if ($i == $current_page) {
+                                        echo '<span class="button current-page-active" style="' . $active_style . '">' . $i . '</span>';
+                                    } else {
+                                        echo '<a href="' . get_admin_url($i, $per_page_admin, $search_query) . '" class="button" style="padding: 2px 8px; font-size: 12px;">' . $i . '</a>';
+                                    }
+                                }
+                                echo '<span style="padding: 0 4px; font-size: 12px;">&hellip;</span>';
+                                echo '<a href="' . get_admin_url($total_pages, $per_page_admin, $search_query) . '" class="button" style="padding: 2px 8px; font-size: 12px;">' . $total_pages . '</a>';
+                            } elseif ($current_page >= $total_pages - 2) {
+                                echo '<a href="' . get_admin_url(1, $per_page_admin, $search_query) . '" class="button" style="padding: 2px 8px; font-size: 12px;">1</a>';
+                                echo '<span style="padding: 0 4px; font-size: 12px;">&hellip;</span>';
+                                for ($i = $total_pages - 2; $i <= $total_pages; $i++) {
+                                    if ($i == $current_page) {
+                                        echo '<span class="button current-page-active" style="' . $active_style . '">' . $i . '</span>';
+                                    } else {
+                                        echo '<a href="' . get_admin_url($i, $per_page_admin, $search_query) . '" class="button" style="padding: 2px 8px; font-size: 12px;">' . $i . '</a>';
+                                    }
+                                }
+                            } else {
+                                echo '<a href="' . get_admin_url(1, $per_page_admin, $search_query) . '" class="button" style="padding: 2px 8px; font-size: 12px;">1</a>';
+                                echo '<span style="padding: 0 4px; font-size: 12px;">&hellip;</span>';
+                                echo '<span class="button current-page-active" style="' . $active_style . '">' . $current_page . '</span>';
+                                echo '<span style="padding: 0 4px; font-size: 12px;">&hellip;</span>';
+                                echo '<a href="' . get_admin_url($total_pages, $per_page_admin, $search_query) . '" class="button" style="padding: 2px 8px; font-size: 12px;">' . $total_pages . '</a>';
+                            }
+                        }
+                        ?>
 
                         <?php if ($current_page < $total_pages): ?>
-                            <a href="<?php echo get_admin_url($current_page + 1, $per_page_admin); ?>" class="button" style="padding: 2px 8px; font-size: 12px;"><?php echo i18n_movie('NEXT'); ?> &#187;</a>
+                            <a href="<?php echo get_admin_url($current_page + 1, $per_page_admin, $search_query); ?>" class="button" style="padding: 2px 8px; font-size: 12px;"><?php echo i18n_movie('NEXT'); ?> &#187;</a>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
 
-                <div style="font-size: 12px; color: #666;">
+                <div style="font-size: 12px; color: #666; white-space: nowrap;">
                     <?php echo i18n_movie('PER_PAGE'); ?> 
                     <select onchange="location = this.value;" style="padding: 2px 5px; font-size: 12px;">
                         <?php foreach (array(10, 25, 50, 100) as $count): ?>
-                            <option value="<?php echo get_admin_url(1, $count); ?>" <?php echo $per_page_admin == $count ? 'selected' : ''; ?>>
+                            <option value="<?php echo get_admin_url(1, $count, $search_query); ?>" <?php echo $per_page_admin == $count ? 'selected' : ''; ?>>
                                 <?php echo $count; ?>
                             </option>
                         <?php endforeach; ?>
