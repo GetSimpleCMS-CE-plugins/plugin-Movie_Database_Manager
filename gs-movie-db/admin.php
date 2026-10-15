@@ -99,6 +99,7 @@ function get_admin_url($page, $per_page, $q = '') {
             <a href="load.php?id=gs-movie-db&action=add" class="button <?php echo ($action === 'add') ? 'current' : ''; ?>">+ <?php echo i18n_movie('ADD_NEW_MOVIE'); ?></a>
 			<a href="load.php?id=gs-movie-db&action=export_csv" class="button"><?php echo i18n_movie('EXPORT_CATALOGUE'); ?></a>
             <a href="load.php?id=gs-movie-db&action=settings" class="button <?php echo ($action === 'settings') ? 'current' : ''; ?>"><?php echo i18n_movie('SETTINGS'); ?></a>
+			<a href="load.php?id=gs-movie-db&action=info" class="button <?php echo ($action === 'info') ? 'current' : ''; ?>"><?php echo i18n_movie('INFO'); ?></a>
 			
 			<!-- Search Form -->
             <form action="load.php" method="get" style="display: inline-flex; align-items: center; gap: 4px; margin-left: 10px;">
@@ -149,10 +150,61 @@ function get_admin_url($page, $per_page, $q = '') {
             </p>
 
             <p>
+                <label><strong><?php echo i18n_movie('CARD_COLORS'); ?></strong></label>
+                <span style="display: flex; gap: 15px; margin-top: 5px; flex-wrap: wrap;">
+                    <span>
+                        <label for="card_bg" style="display: block; font-size: 11px; color: #000; margin-bottom: 2px;"><?php echo i18n_movie('BACK_COLOR'); ?>:</label>
+                        <input type="text" class="text" id="card_bg" name="card_bg" value="<?php echo htmlspecialchars(isset($settings['card_bg']) && $settings['card_bg'] !== '' ? $settings['card_bg'] : '#0073aa'); ?>" style="width: 100px;">
+                    </span>
+                    <span>
+                        <label for="card_title" style="display: block; font-size: 11px; color: #000; margin-bottom: 2px;"><?php echo i18n_movie('TITLE_COLOR'); ?>:</label>
+                        <input type="text" class="text" id="card_title" name="card_title" value="<?php echo htmlspecialchars(isset($settings['card_title']) && $settings['card_title'] !== '' ? $settings['card_title'] : '#fff'); ?>" style="width: 100px;">
+                    </span>
+                    <span>
+                        <label for="card_meta" style="display: block; font-size: 11px; color: #000; margin-bottom: 2px;"><?php echo i18n_movie('YEAR'); ?>/<?php echo i18n_movie('GENRES_'); ?>:</label>
+                        <input type="text" class="text" id="card_meta" name="card_meta" value="<?php echo htmlspecialchars(isset($settings['card_meta']) && $settings['card_meta'] !== '' ? $settings['card_meta'] : '#dbdbdb'); ?>" style="width: 100px;">
+                    </span>
+                </span>
+            </p>
+
+            <p>
                 <input type="submit" name="save_settings" class="submit" value="<?php echo i18n_movie('SAVE_SETTINGS'); ?>">
             </p>
         </form>
+	<?php elseif ($action === 'info'): ?>
+    <!-- INFO SECTION -->
+    <div class="moviedb-info">
+        <h3>About GetSimple CE Movie Database Manager</h3>
+        <p>
+            <strong>Version:</strong> 1.2<br>
+            <strong>Description:</strong> A lightweight Movie Database Manager for GetSimple CE to manage, display, and search movie catalogues.
+        </p>
 
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+
+        <h3>Usage Instructions</h3>
+        <ul style="line-height: 1.6; padding-left: 20px; list-style-type: disc;">
+            <li><strong>Adding Movies:</strong> Click <em>"+ Add New Movie"</em> to populate details such as title, release year, genre, poster URL, trailer link, and IMDb link.</li>
+            <li><strong>Managing Catalogue:</strong> Search titles directly using the header search box, edit records, or delete entries.</li>
+            <li><strong>Exporting Data:</strong> Use <em>"Export Catalogue"</em> to generate and download a CSV file of your full movie collection.</li>
+		</ul>
+		<h3>Displaying the Movie Grid on the Frontend</h3>
+		<p><strong>To display the movie database grid on your website:</strong></p>
+		<ol style="line-height: 1.6; padding-left: 20px;">
+			<li> Create a new page named Movies.</li>
+			<li>Add the following shortcode to the page content: <b><em>(% movie_db_grid %)</b></em></li>
+		</ol>
+		<p><strong>Alternative: Call the Template Function</strong></p>
+		<p>If you want to display the movie grid directly within a theme template, insert the following PHP function: <b><em>get_movie_db_grid();</b></em><p>
+		<h3>Enabling Frontend Movie Search</h3>
+		<p>Add this shortcode to the page where you want the search feature to appear: <b><em>(% movie_db_search %)</b></em></p>
+		<p>To display the search feature directly in a theme template, insert: <b><em>get_movie_db_search();</b></em></p>
+		<h3>Configuring URL Rewriting in .htaccess</h3>
+		<p>To route movie URLs in the format /movies/any-slug to the appropriate GetSimple page, add the following rewrite rule to the root .htaccess file:</p>
+		<p><b><em>RewriteRule ^movies/(.*)$ index.php?id=movies&movie=$1 [L,QSA]</b></em></p>
+		<p>Purpose: This rule routes URLs under /movies/ to the GetSimple page with the ID movies, passing the movie slug through the movie query parameter.</p>
+		<small><strong>Important:</strong> Ensure that Apache's rewrite module (mod_rewrite) is enabled and that the rule is placed within the appropriate rewrite configuration, typically after RewriteEngine On. Check for conflicting rewrite rules in your existing .htaccess file.</small>
+	</div>
     <?php elseif ($action === 'add' || $action === 'edit'): ?>
         <!-- ADD / EDIT MOVIE FORM -->
         <h3><?php echo ($action === 'edit') ? i18n_movie('EDIT_MOVIE') : i18n_movie('ADD_NEW_MOVIE'); ?></h3>
@@ -229,8 +281,29 @@ function get_admin_url($page, $per_page, $q = '') {
                         <label for="imdb"><?php echo i18n_movie('IMDB_URL'); ?>:</label>
                         <input type="text" class="text" id="imdb" name="imdb" placeholder="https://www.imdb.com/title/tt1234567/" value="<?php echo $movie_to_edit && isset($movie_to_edit['imdb']) ? htmlspecialchars($movie_to_edit['imdb']) : ''; ?>" style="width:100%;">
                     </p>
-                </div>
-            </div>
+					
+					<!-- Poster Preview / Detail Page Link Box -->
+	<?php if (!empty($movie_to_edit)): ?>
+	<?php 
+    global $SITEURL;
+    $slug_prefix = !empty($settings['slug_prefix']) ? $settings['slug_prefix'] : 'movies';
+    $movie_slug = !empty($movie_to_edit['slug']) ? $movie_to_edit['slug'] : '';
+    $detail_url = $SITEURL . $slug_prefix . '/' . $movie_slug;
+  ?>
+  <div style="margin-top: 15px; text-align: center;">
+    <?php if (!empty($movie_to_edit['poster'])): ?>
+      <a href="<?php echo htmlspecialchars($detail_url); ?>" target="_blank" title="<?php echo i18n_movie('CLICK_PREVIEW'); ?>">
+        <img src="<?php echo htmlspecialchars($movie_to_edit['poster']); ?>" alt="Poster Preview" style="max-height: 300px; border: 1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">
+      </a>
+    <?php else: ?>
+      <a href="<?php echo htmlspecialchars($detail_url); ?>" target="_blank" style="display: flex; align-items: center; justify-content: center; width: 180px; height: 260px; margin: 0 auto; background: #e5e5e5; color: #333; text-decoration: none; border: 1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-size: 16px; font-weight: 500; text-align: center; padding: 15px; box-sizing: border-box; line-height: 1.3;">
+        <?php echo i18n_movie('CLICK_PREVIEW_'); ?>
+      </a>
+    <?php endif; ?>
+  </div>
+<?php endif; ?>
+				</div>
+           </div>
 
             <p style="margin-top:20px;">
                 <input type="submit" name="save_movie" class="submit" value="<?php echo ($action === 'edit') ? i18n_movie('UPDATE_MOVIE') : i18n_movie('SAVE_MOVIE'); ?>">
@@ -248,7 +321,7 @@ function get_admin_url($page, $per_page, $q = '') {
                     <th style="width:70px;"><?php echo i18n_movie('YEAR'); ?></th>
                     <th style="width:140px;"><?php echo i18n_movie('GENRES_'); ?></th>
                     <th style="width:60px;"><?php echo i18n_movie('RATING_'); ?></th>
-                    <th style="width:130px; text-align:right;"><?php echo i18n_movie('ACTIONS'); ?></th>
+					<th style="width:100px; text-align:right;"><?php echo i18n_movie('ACTIONS'); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -281,11 +354,13 @@ function get_admin_url($page, $per_page, $q = '') {
                             <td><?php echo htmlspecialchars($m['year']); ?></td>
                             <td><small><?php echo htmlspecialchars($m['genres']); ?></small></td>
                             <td>&#9733; <?php echo htmlspecialchars($m['rating']); ?></td>
-                            <td style="text-align:right;">
+							
+							<td style="text-align:right;">
                                 <a href="load.php?id=gs-movie-db&action=edit&edit=<?php echo urlencode($m['id']); ?>" class="edit"><?php echo i18n_movie('EDIT'); ?></a> | 
-                                <a href="load.php?id=gs-movie-db&action=delete&id_movie=<?php echo urlencode($m['id']); ?>" class="cancel" onclick="return confirm('<?php echo i18n_movie('CONFIRM_DELETE'); ?>');"><?php echo i18n_movie('DELETE'); ?></a>
+                                <a href="load.php?id=gs-movie-db&action=delete&id_movie=<?php echo urlencode($m['id']); ?>" style="padding: 1px 5px 1px 5px !important; text-decoration: none; font-size:18px;" class="cancel" title="<?php echo i18n_movie('DELETE'); ?>" onclick="return confirm('<?php echo i18n_movie('CONFIRM_DELETE'); ?>');">&times;</a>
                             </td>
-                        </tr>
+
+						</tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </tbody>

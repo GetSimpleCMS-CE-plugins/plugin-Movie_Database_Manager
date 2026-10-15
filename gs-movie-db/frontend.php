@@ -144,7 +144,12 @@ class MovieDBFrontend {
         $offset = ($current_page - 1) * $per_page;
         $movies = array_slice($all_movies, $offset, $per_page);
 
-        // --- 2. Build Grid HTML ---
+        // --- 2. Color Settings with Defaults ---
+        $card_bg     = !empty($settings['card_bg']) ? htmlspecialchars($settings['card_bg']) : '#0073aa';
+        $card_title  = !empty($settings['card_title']) ? htmlspecialchars($settings['card_title']) : '#fff';
+        $card_meta   = !empty($settings['card_meta']) ? htmlspecialchars($settings['card_meta']) : '#dbdbdb';
+
+        // --- 3. Build Grid HTML ---
         $base_url = rtrim(self::getBaseUrl(), '/') . '/';
         $slug_prefix = !empty($settings['slug_prefix']) ? trim($settings['slug_prefix'], '/') : 'movies';
         $catalog_url = self::getCatalogUrl();
@@ -161,7 +166,7 @@ class MovieDBFrontend {
 
             $html .= '
             <style>.moviedb-card img {transition: filter 0.3s ease;}.moviedb-card img:hover {filter: brightness(200%) grayscale(1);}</style>
-            <div class="moviedb-card" style="border: 1px solid #333; border-radius: 8px; overflow: hidden; background: #0073AA; color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
+            <div class="moviedb-card" style="border: 1px solid #333; border-radius: 8px; overflow: hidden; background: ' . $card_bg . '; color: ' . $card_title . '; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
                 <a href="' . $movie_url . '" style="text-decoration:none; color:inherit;">
                     <div style="position: relative; width: 100%; height: 100%; background: #000;">
                         <img src="' . $poster . '" alt="' . $title . '" style="width: 100%; height: 100%; object-fit: cover;">
@@ -170,8 +175,8 @@ class MovieDBFrontend {
                 </a>
                 <div style="padding: 12px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
-                        <h4 style="margin: 0 0 5px 0; font-size: 16px;"><a href="' . $movie_url . '" style="text-decoration: none; color: #fff;">' . $title . '</a></h4>
-                        <p style="margin: 0; font-size: 12px; color: #dbdbdb;">' . $year . ' &#9679; ' . $genres . '</p>
+                        <h4 style="margin: 0 0 5px 0; font-size: 16px;"><a href="' . $movie_url . '" style="text-decoration: none; color: ' . $card_title . ';">' . $title . '</a></h4>
+                        <p style="margin: 0; font-size: 12px; color: ' . $card_meta . ';">' . $year . ' &#9679; ' . $genres . '</p>
                     </div>
                 </div>
             </div>';
@@ -354,7 +359,7 @@ class MovieDBFrontend {
                     <a href="' . $imdb . '" target="_blank" rel="noopener noreferrer" style="display: block; width: 100%; text-align: center; margin-top: 12px; padding: 10px 0; background: #f5c518; color: #000; font-weight: bold; text-decoration: none; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                         ' . i18n_movie('IMDB_VIEW') . ' &#127916;
                     </a>
-                    ' : '') . '<p><b>' . i18n_movie('RATING_') . ':</b> <span style="color:#F5C518">&#9733; </span>' . $rating . '/10 <b>'. i18n_movie('RUNTIME_F') . ':</b> ' . $runtime . ' ' . i18n_movie('RUNTIME_') . '</p>
+                    ' : '') . '<p style="margin-top: 5px; text-align: center;"><b>' . i18n_movie('RATING_') . ':</b> <span style="color:#F5C518">&#9733; </span>' . $rating . '/10 <b>'. i18n_movie('RUNTIME_F') . ':</b> ' . $runtime . ' ' . i18n_movie('RUNTIME_') . '</p>
                 </div>
 
                 <div style="flex: 2; min-width: 280px;">

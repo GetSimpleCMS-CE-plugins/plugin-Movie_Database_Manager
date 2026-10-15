@@ -114,7 +114,8 @@ class MovieDB {
                 isset($movie['title']) ? $movie['title'] : '',
                 isset($movie['director']) ? $movie['director'] : '',
                 isset($movie['cast']) ? (is_array($movie['cast']) ? implode(' ', $movie['cast']) : $movie['cast']) : '',
-                isset($movie['genres']) ? (is_array($movie['genres']) ? implode(' ', $movie['genres']) : $movie['genres']) : ''
+                isset($movie['genres']) ? (is_array($movie['genres']) ? implode(' ', $movie['genres']) : $movie['genres']) : '',
+				isset($movie['year']) ? (string)$movie['year'] : ''
             );
 
             $searchableText = implode(' ', $searchableFields);
@@ -241,7 +242,10 @@ class MovieDB {
         $defaults = array(
             'slug_prefix' => 'movies',
             'per_page' => 12,
-            'default_poster' => $SITEURL .'plugins/gs-movie-db/img/placeholder.jpg'
+            'default_poster' => $SITEURL .'plugins/gs-movie-db/img/placeholder.jpg',
+            'card_bg' => '#0073aa',
+            'card_title' => '#fff',
+            'card_meta' => '#dbdbdb'
         );
 
         if (!file_exists($path)) {
@@ -253,7 +257,10 @@ class MovieDB {
             return array(
                 'slug_prefix' => !empty($xml->slug_prefix) ? (string)$xml->slug_prefix : $defaults['slug_prefix'],
                 'per_page' => !empty($xml->per_page) ? (int)$xml->per_page : $defaults['per_page'],
-                'default_poster' => !empty($xml->default_poster) ? (string)$xml->default_poster : $defaults['default_poster']
+                'default_poster' => !empty($xml->default_poster) ? (string)$xml->default_poster : $defaults['default_poster'],
+                'card_bg' => isset($xml->card_bg) && (string)$xml->card_bg !== '' ? (string)$xml->card_bg : $defaults['card_bg'],
+                'card_title' => isset($xml->card_title) && (string)$xml->card_title !== '' ? (string)$xml->card_title : $defaults['card_title'],
+                'card_meta' => isset($xml->card_meta) && (string)$xml->card_meta !== '' ? (string)$xml->card_meta : $defaults['card_meta']
             );
         }
 
@@ -268,10 +275,17 @@ class MovieDB {
         $slug_prefix = isset($data['slug_prefix']) ? $data['slug_prefix'] : 'movies';
         $per_page = isset($data['per_page']) ? intval($data['per_page']) : 12;
         $default_poster = isset($data['default_poster']) ? $data['default_poster'] : '';
+        
+        $card_bg = isset($data['card_bg']) ? trim($data['card_bg']) : '#0073aa';
+        $card_title = isset($data['card_title']) ? trim($data['card_title']) : '#fff';
+        $card_meta = isset($data['card_meta']) ? trim($data['card_meta']) : '#dbdbdb';
 
         $xml->addChild('slug_prefix', self::slugify($slug_prefix));
         $xml->addChild('per_page', $per_page);
         $xml->addChild('default_poster', htmlspecialchars($default_poster));
+        $xml->addChild('card_bg', htmlspecialchars($card_bg));
+        $xml->addChild('card_title', htmlspecialchars($card_title));
+        $xml->addChild('card_meta', htmlspecialchars($card_meta));
 
         $xml->asXML($path);
     }

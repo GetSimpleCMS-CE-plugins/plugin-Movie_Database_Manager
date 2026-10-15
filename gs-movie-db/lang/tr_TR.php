@@ -74,5 +74,11 @@ $i18n = array(
  'NO_MOVIE_LISTED' 		=> 'Katalogda şu anda listelenen film yok.',
  'TRAILER' 				=> 'Fragman',
  'IMDB_URL' 			=> 'IMDb URL',
- 'IMDB_VIEW' 			=> 'IMDb\'de Görüntüle'
+ 'IMDB_VIEW' 			=> 'IMDb\'de Görüntüle',
+ 'CLICK_PREVIEW'  		=> 'Sayfayı önizlemek için tıklayın',
+ 'CLICK_PREVIEW_' 		=> 'Sayfayı<br>önizlemek<br>için tıklayın',
+ 'CARD_COLORS' 			=> 'Film Kartı Renkleri',
+ 'BACK_COLOR'  			=> 'Arka Plan',
+ 'TITLE_COLOR'			=> 'Başlık',
+ 'INFO' 				=> 'Bilgi'
 );

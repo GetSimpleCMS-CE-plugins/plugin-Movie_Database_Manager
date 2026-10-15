@@ -74,5 +74,11 @@ $i18n = array(
  'NO_MOVIE_LISTED' 		=> 'Não existem filmes atualmente listados no catálogo.',
  'TRAILER' 				=> 'Trailer',
  'IMDB_URL' 			=> 'URL do IMDb',
- 'IMDB_VIEW' 			=> 'Ver no IMDb'
+ 'IMDB_VIEW' 			=> 'Ver no IMDb',
+ 'CLICK_PREVIEW'  		=> 'Clique para pré-visualizar a página',
+ 'CLICK_PREVIEW_' 		=> 'Clique para<br>pré-visualizar<br>a página',
+ 'CARD_COLORS' 			=> 'Cores dos Cartões de Filmes',
+ 'BACK_COLOR'  			=> 'Fundo',
+ 'TITLE_COLOR' 			=> 'Título',
+ 'INFO' 				=> 'Informação'
 );
