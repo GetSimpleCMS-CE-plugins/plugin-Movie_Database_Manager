@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Movie Database Manager
  * Description: Movie DB plugin for GetSimple CMS CE
- * Version: 1.2
+ * Version: 1.3
  * Author: Zeth
  */
 
@@ -13,7 +13,7 @@ $thisfile = basename(__FILE__);
 register_plugin(
     'gs-movie-db',
     'Movie Database Manager',
-    '1.2',
+    '1.3',
     'Zeth',
     'https://getsimple-ce.ovh/',
     'Manage catalogue, ratings, trailers, and movie pages.',

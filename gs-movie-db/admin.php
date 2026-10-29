@@ -86,6 +86,81 @@ function get_admin_url($page, $per_page, $q = '') {
 }
 ?>
 
+<style>
+    /* Mobile Scaling & Responsive Table Fixes */
+    .movie-db-admin-wrap {
+        font-size: 14px;
+        max-width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
+    }
+    .movie-db-admin-wrap input[type="text"],
+    .movie-db-admin-wrap input[type="number"],
+    .movie-db-admin-wrap select,
+    .movie-db-admin-wrap textarea {
+        font-size: 14px !important;
+        box-sizing: border-box;
+        max-width: 100%;
+    }
+    .movie-db-admin-wrap table.edittable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .movie-db-admin-wrap table.edittable th {
+        background: #f1f1f1;
+        padding: 8px;
+        text-align: left;
+    }
+    .movie-db-admin-wrap table.edittable td {
+        padding: 8px;
+        vertical-align: middle;
+    }
+
+    @media screen and (max-width: 768px) {
+        .movie-db-admin-wrap form .sub-nav-toolbar,
+        .movie-db-admin-wrap div[style*="display: flex"] {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+        /* Transform catalogue table into clean card stacks on mobile */
+        .movie-db-admin-wrap table.edittable thead {
+            display: none;
+        }
+        .movie-db-admin-wrap table.edittable, 
+        .movie-db-admin-wrap table.edittable tbody, 
+        .movie-db-admin-wrap table.edittable tr, 
+        .movie-db-admin-wrap table.edittable td {
+            display: block;
+            width: 100% !important;
+            box-sizing: border-box;
+        }
+        .movie-db-admin-wrap table.edittable tr {
+            background: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .movie-db-admin-wrap table.edittable td {
+            border: none !important;
+            padding: 6px 0 !important;
+            text-align: left !important;
+        }
+        /* Add labels for mobile view context */
+        .movie-db-admin-wrap table.edittable td:nth-child(1) { text-align: center !important; margin-bottom: 5px; }
+        .movie-db-admin-wrap table.edittable td:nth-child(2):before { content: "Movie Title: "; font-weight: bold; display: block; color: #333; }
+        .movie-db-admin-wrap table.edittable td:nth-child(3):before { content: "Release Year: "; font-weight: bold; display: block; color: #333; }
+        .movie-db-admin-wrap table.edittable td:nth-child(4):before { content: "Genres: "; font-weight: bold; display: block; color: #333; }
+        .movie-db-admin-wrap table.edittable td:nth-child(5):before { content: "Rating: "; font-weight: bold; display: block; color: #333; }
+        .movie-db-admin-wrap table.edittable td:nth-child(6) {
+            border-top: 1px solid #eee !important;
+            margin-top: 8px;
+            padding-top: 10px !important;
+            text-align: right !important;
+        }
+    }
+</style>
+
 <div class="movie-db-admin-wrap">
     <h3><b><?php echo i18n_movie('PLUGIN_TITLE'); ?></b></h3>
 	<p><?php echo i18n_movie('PLUGIN_DESC'); ?></p>
@@ -230,16 +305,16 @@ function get_admin_url($page, $per_page, $q = '') {
                         <textarea name="synopsis" id="synopsis" rows="6" style="width:100%; box-sizing:border-box;"><?php echo $movie_to_edit ? htmlspecialchars($movie_to_edit['synopsis']) : ''; ?></textarea>
                     </p>
 
-                    <div style="display:flex; gap:10px;">
-                        <p style="flex:1;">
+                    <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                        <p style="flex:1; min-width: 90px;">
                             <label for="year"><?php echo i18n_movie('RELEASE_YEAR'); ?></label>
                             <input type="number" class="text" id="year" name="year" value="<?php echo $movie_to_edit ? htmlspecialchars($movie_to_edit['year']) : date('Y'); ?>" style="width:100%;">
                         </p> 
-                        <p style="flex:1;">
+                        <p style="flex:1; min-width: 90px;">
                             <label for="runtime"><?php echo i18n_movie('RUNTIME'); ?></label>
                             <input type="number" class="text" id="runtime" name="runtime" value="<?php echo $movie_to_edit ? htmlspecialchars($movie_to_edit['runtime']) : '120'; ?>" style="width:100%;">
                         </p>
-                        <p style="flex:1;">
+                        <p style="flex:1; min-width: 90px;">
                             <label for="rating"><?php echo i18n_movie('RATING'); ?></label>
                             <input type="text" class="text" id="rating" name="rating" value="<?php echo $movie_to_edit ? htmlspecialchars($movie_to_edit['rating']) : '8.0'; ?>" style="width:100%;">
                         </p>
@@ -293,7 +368,7 @@ function get_admin_url($page, $per_page, $q = '') {
   <div style="margin-top: 15px; text-align: center;">
     <?php if (!empty($movie_to_edit['poster'])): ?>
       <a href="<?php echo htmlspecialchars($detail_url); ?>" target="_blank" title="<?php echo i18n_movie('CLICK_PREVIEW'); ?>">
-        <img src="<?php echo htmlspecialchars($movie_to_edit['poster']); ?>" alt="Poster Preview" style="max-height: 300px; border: 1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">
+        <img src="<?php echo htmlspecialchars($movie_to_edit['poster']); ?>" alt="Poster Preview" style="max-height: 300px; max-width: 100%; border: 1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.85';" onmouseout="this.style.opacity='1';">
       </a>
     <?php else: ?>
       <a href="<?php echo htmlspecialchars($detail_url); ?>" target="_blank" style="display: flex; align-items: center; justify-content: center; width: 180px; height: 260px; margin: 0 auto; background: #e5e5e5; color: #333; text-decoration: none; border: 1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-size: 16px; font-weight: 500; text-align: center; padding: 15px; box-sizing: border-box; line-height: 1.3;">
@@ -339,9 +414,9 @@ function get_admin_url($page, $per_page, $q = '') {
                         <tr style="<?php echo $is_matched ? 'background-color: #fff8e1;' : ''; ?>">
                             <td style="text-align:center; padding: 4px;">
                                 <?php if (!empty($m['poster'])): ?>
-                                    <img src="<?php echo htmlspecialchars($m['poster']); ?>" alt="" style="width:36px; height:50px; object-fit:cover; border-radius:2px; display:block;">
+                                    <img src="<?php echo htmlspecialchars($m['poster']); ?>" alt="" style="width:36px; height:50px; object-fit:cover; border-radius:2px; display:inline-block;">
                                 <?php else: ?>
-                                    <div style="width:36px; height:50px; background:#e0e0e0; display:flex; align-items:center; justify-content:center; font-size:9px; color:#888;">N/A</div>
+                                    <div style="width:36px; height:50px; background:#e0e0e0; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#888;">N/A</div>
                                 <?php endif; ?>
                             </td>
                             <td>
